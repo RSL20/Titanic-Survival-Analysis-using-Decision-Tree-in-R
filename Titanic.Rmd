@@ -1,0 +1,122 @@
+---
+title: "Titanic Survival Analysis using Decision Tree"
+author: "Rishabh Lavangad"
+date: "23 November 2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+1. Import the data set in R, create a variable called titanic & store the data in it.
+```{r}
+titanic <- read.csv("Titanic.csv")
+head(titanic)
+```
+
+2. Print the structure of dataset. 
+```{r}
+str(titanic)
+```
+
+3. Print last 6 rows of dataset.
+```{r}
+tail(titanic,6)
+```
+
+4.Create a barplot using ggplot with class on x-axis, frequency on y -axis & sex as the fill, write your observation. 
+
+```{r}
+library(ggplot2)
+ggplot(titanic, aes(x = Pclass, fill = Sex)) + geom_bar()
+```
+
+OBSERVATION :-
+As compared to first two Pclass's,the third Pclass has more number of male
+and female count.
+
+
+5. Use ggplot() to estimate your chances of servival from the distibution of sexes within the classes of the ship; Hint: use fact grids.
+```{r}
+ggplot(titanic, aes(x = Pclass, fill = Sex)) + geom_bar(position = "dodge") + facet_grid(~Survived)
+```
+
+6. Use ggplot() to estimate your chances of survival based on your age from the distribution of sexes within the class of the ship; Hint: Use the above plot & overlay age using jitter plot .
+```{r}
+posn.j <- position_jitter(0.5, 0)
+ggplot(titanic,aes(x=factor(Pclass),y=Age,col=factor(Sex)))+
+        geom_jitter(size=3,alpha=0.5,position=posn.j)+
+        facet_grid(". ~ Survived")
+```
+
+7. Import the training dataset using the following link and print the structure to console "http://50.amazonaws.com/assets.datacamp.com/course/kaggle/train.csv"
+```{r}
+train_url <- "http://s3.amazonaws.com/assets.datacamp.com/course/Kaggle/train.csv"
+train <- read.csv(train_url)
+str(train)
+```
+
+8. Import the testing dataset using the following link & print the structure to console "http://50.amazonaws.com/assets.datacamp.com/course/kaggle/train.csv"
+```{r}
+test_url <- "http://s3.amazonaws.com/assets.datacamp.com/course/Kaggle/test.csv"
+test <- read.csv(test_url)
+str(test)
+```
+
+9. Print the survival rates in absolute numbers for train.
+```{r}
+table(train$Survived)
+```
+
+10. Print th survival rates in proportion for train.
+```{r}
+prop.table(table(train$Survived))
+```
+
+11. Print a two way comparision table for sex and survived
+```{r}
+table(train$Sex, train$Survived)
+```
+
+12. Print a two way comparision for sex and survived, show the proportions row wise i.e for Male & Female
+```{r}
+prop.table(table(train$Sex, train$Survived),margin =1)
+```
+
+13. Create a column called child using the condition age < 18 
+```{r}
+library(dplyr)
+train$Child <- NA
+train$Child[train$Age < 18] <- "1"
+train$Child[train$Age >= 18] <- "0"
+head(train)
+```
+
+14. Print a two way comparison table to show the proportion of this child variable with respect to survival
+```{r}
+prop.table(table(train$Child,train$Survived))
+```
+
+15. Using rpart build a decision tree on the training dataset 
+Dependent Vaar : Survived 
+Independent var : Pclass,sex,age,parch,fare,embarked
+
+```{r}
+library(caret)
+train$Survived=as.factor(train$Survived)
+tree <- train(Survived  ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked, data = train, method = "rpart", na.action = na.exclude)
+plot(tree$finalModel,uniform = T,main="decison tree")
+text(tree$finalModel,use.n = T,all=T,cex=.8)
+```
+
+
+16. Plot your decision tee using fancyrpart plots
+```{r}
+library(rattle)
+fancyRpartPlot(tree$finalModel)
+```
+
+17. Make predictions on the test set
+```{r}
+prediction <- predict(tree, test,type = "prob")
+head(prediction)
+```
